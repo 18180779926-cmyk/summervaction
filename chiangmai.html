@@ -1,0 +1,522 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chiang Mai Journal | Travel Sketchbook</title>
+    <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@600;700&family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #ECE5DB;
+            --paper-bg: #FAF6EE;
+            --text-color: #4A403A;
+            --primary-green: #2E5A44;
+            --accent-orange: #D96B43;
+            --accent-yellow: #E8B647;
+            --tape-color: rgba(235, 222, 195, 0.85);
+            --border-color: #D6CBB9;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            font-family: 'Poppins', sans-serif;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            /* 细致桌纹背景 */
+            background-image: 
+                radial-gradient(#D3C8B8 1px, transparent 1px);
+            background-size: 20px 20px;
+            overflow-x: hidden;
+        }
+
+        .handwritten {
+            font-family: 'Caveat', cursive;
+        }
+
+        /* 手帐本主结构 */
+        .journal-container {
+            width: 100%;
+            max-width: 900px;
+            min-height: 620px;
+            background: var(--paper-bg);
+            border-radius: 16px;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.12), inset 0 0 0 2px #FFF;
+            border: 1px solid var(--border-color);
+            position: relative;
+            padding: 40px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        /* 手帐本中间线与装订环 */
+        .journal-container::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 2px;
+            height: 100%;
+            background: linear-gradient(to bottom, rgba(0,0,0,0.05), rgba(0,0,0,0.15), rgba(0,0,0,0.05));
+            border-left: 1px dashed rgba(0,0,0,0.1);
+        }
+     
+        /* 🎵 音乐播放控制小部件 */
+        .music-player {
+            position: absolute;
+            top: 20px;
+            right: 25px;
+            z-index: 20;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(255, 255, 255, 0.85);
+            padding: 6px 14px;
+            border-radius: 20px;
+            border: 1px solid var(--border-color);
+            box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .music-player:hover {
+            transform: scale(1.05);
+            background: #FFFFFF;
+        }
+
+        .music-icon {
+            width: 18px;
+            height: 18px;
+            fill: var(--accent-orange);
+            transition: transform 2s linear infinite;
+        }
+
+        .music-playing .music-icon {
+            animation: spin 3s linear infinite;
+        }
+
+        @keyframes spin {
+            100% { transform: rotate(360deg); }
+        }
+
+        .music-text {
+            font-size: 0.8rem;
+            font-weight: 500;
+            color: var(--primary-green);
+        }
+
+        /* 动态翻页页面控制器 */
+        .page-content {
+            display: none;
+            opacity: 0;
+            transition: opacity 0.4s ease-in-out;
+            z-index: 1;
+        }
+
+        .page-content.active {
+            display: block;
+            opacity: 1;
+            animation: fadeIn 0.5s ease-out forwards;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: scale(0.98); }
+            to { opacity: 1; transform: scale(1); }
+        }
+
+        /* 章节页头 HEADER */
+        .chapter-header {
+            text-align: center;
+            margin-bottom: 25px;
+            position: relative;
+        }
+
+        .chapter-tag {
+            display: inline-block;
+            background: #FFE6D5;
+            color: var(--accent-orange);
+            padding: 4px 14px;
+            border-radius: 15px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        .chapter-header h2 {
+            font-size: 2.2rem;
+            color: var(--primary-green);
+        }
+
+        .chapter-header p {
+            font-size: 0.95rem;
+            color: #8C827A;
+        }
+
+        /* 拍立得照片卡片 */
+        .polaroid {
+            background: #FFFFFF;
+            padding: 12px 12px 16px;
+            box-shadow: 0 6px 16px rgba(0,0,0,0.08);
+            border-radius: 6px;
+            position: relative;
+            transition: transform 0.3s ease;
+        }
+
+        .polaroid:hover {
+            transform: translateY(-4px) rotate(0deg) !important;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.12);
+        }
+
+        .polaroid img {
+            width: 100%;
+            height: auto;
+            display: block;
+            border-radius: 3px;
+        }
+
+        .polaroid .caption {
+            text-align: center;
+            font-size: 1.25rem;
+            color: #444;
+            padding-top: 8px;
+        }
+
+        /* 胶带 */
+        .tape {
+            position: absolute;
+            top: -10px;
+            left: 35%;
+            width: 70px;
+            height: 20px;
+            background: var(--tape-color);
+            transform: rotate(-2deg);
+            z-index: 2;
+            border-left: 2px dashed rgba(255,255,255,0.4);
+            border-right: 2px dashed rgba(255,255,255,0.4);
+        }
+
+        /* 各种布局结构 */
+        .grid-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 24px;
+            align-items: center;
+        }
+
+        .grid-3 {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 16px;
+            align-items: center;
+        }
+
+        /* 专门针对横图（Landscape）的组图排版 */
+        .landscape-pair {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            max-width: 680px;
+            margin: 0 auto;
+        }
+
+        .landscape-single {
+            max-width: 720px;
+            margin: 0 auto;
+        }
+
+        .tilt-left { transform: rotate(-1.5deg); }
+        .tilt-right { transform: rotate(1.5deg); }
+
+        /* 底部导航翻页控制 */
+        .journal-nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-top: 20px;
+            border-top: 1px dashed var(--border-color);
+            margin-top: 25px;
+            z-index: 10;
+        }
+
+        .nav-btn {
+            background: var(--primary-green);
+            color: white;
+            border: none;
+            padding: 8px 20px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-weight: 500;
+            font-size: 0.9rem;
+            transition: background 0.2s ease, transform 0.1s ease;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .nav-btn:hover {
+            background: #1e3d2e;
+            transform: scale(1.03);
+        }
+
+        .nav-btn:disabled {
+            background: #C4BCAF;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .page-indicator {
+            font-size: 1.1rem;
+            color: var(--accent-orange);
+            font-weight: bold;
+        }
+
+        @media (max-width: 768px) {
+            .grid-2, .grid-3 {
+                grid-template-columns: 1fr;
+            }
+            .journal-container {
+                padding: 20px;
+            }
+            .journal-container::before {
+                display: none;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<div class="journal-container">
+  <!-- 🎵 音乐播放器部件 -->
+    <div class="music-player" id="musicBtn" onclick="toggleMusic()">
+        <svg class="music-icon" viewBox="0 0 24 24">
+            <path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/>
+        </svg>
+        <span class="music-text" id="musicStatus">Play Music ♫</span>
+    </div>
+
+    <!-- 隐藏的音频标签：预设了清迈氛围的 Acoustic Bossa Nova 乐曲 -->
+    <audio id="bgm" loop preload="auto">
+        <source src="https://cdn.pixabay.com/download/audio/2022/05/27/audio_1808fbf07a.mp3?filename=lofi-study-112191.mp3" type="audio/mpeg">
+    </audio>
+
+    <!-- PAGE 0: COVER & WELCOME -->
+    <div class="page-content active" id="page-0">
+        <div class="chapter-header" style="margin-top: 30px;">
+            <span class="chapter-tag">Tuk-Tuk Express</span>
+            <h1 class="handwritten" style="font-size: 3.5rem; color: var(--primary-green);">Chiang Mai Summer Journal</h1>
+            <p class="handwritten" style="font-size: 1.5rem; color: var(--accent-orange);">– Travel Sketches & Besties Memories –</p>
+        </div>
+        
+        <div class="landscape-single" style="margin-top: 20px;">
+            <div class="polaroid tilt-left">
+                <div class="tape"></div>
+                <img src="image_21.png" alt="FAVS Girls Group Shot">
+                <div class="caption handwritten"> Girls' Summer Gateway in Chiang Mai ✨</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- PAGE 1: CHAPTER 01 - OOTD & DAILY LOOKS -->
+    <div class="page-content" id="page-1">
+        <div class="chapter-header">
+            <span class="chapter-tag">Chapter 01</span>
+            <h2 class="handwritten">Summer OOTD & Daily Vibe</h2>
+            <p>Hats, dresses, and sunny moods</p>
+        </div>
+
+        <div class="grid-2">
+            <div class="polaroid tilt-right">
+                <img src="image_12.png" alt="OOTD Look">
+                <div class="caption handwritten">Sunny OOTD Style 👗</div>
+            </div>
+            <div class="polaroid tilt-left">
+                <img src="image_23.png" alt="Besties Selfie">
+                <div class="caption handwritten">Besties Selfie Time 👒</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- PAGE 2: CHAPTER 02 - GREEN SLOW LIFE -->
+    <div class="page-content" id="page-2">
+        <div class="chapter-header">
+            <span class="chapter-tag">Chapter 02</span>
+            <h2 class="handwritten">Green Shades & Wooden Cabins</h2>
+            <p>Strolling through lush trees and refreshing streams</p>
+        </div>
+
+        <div class="grid-2">
+            <div class="polaroid tilt-left">
+                <img src="image_11.png" alt="Walk in Shades">
+                <div class="caption handwritten">Walk Under the Green Canopy 🌿</div>
+            </div>
+            <div class="polaroid tilt-right">
+                <img src="image_13.png" alt="Dancing by Wooden Cabin">
+                <div class="caption handwritten">Spinning by the Cabin 🏡</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- PAGE 3: CHAPTER 02 - CONTINUED (FLOWERS & STREAM) -->
+    <div class="page-content" id="page-3">
+        <div class="chapter-header">
+            <span class="chapter-tag">Chapter 02 Continued</span>
+            <h2 class="handwritten">Nature & Cool Waters</h2>
+            <p>Embracing blooming flowers and mountain streams</p>
+        </div>
+
+        <div class="grid-2">
+            <div class="polaroid tilt-right">
+                <img src="image_14.png" alt="Under Flowering Trees">
+                <div class="caption handwritten">Under the Blooming Canopy 🌸</div>
+            </div>
+            <div class="polaroid tilt-left">
+                <img src="image_15.png" alt="Playing in Stream">
+                <div class="caption handwritten">Chasing Cool Streams 💦</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- PAGE 4: CHAPTER 03 - FRIENDS & TROPICAL EXPLORATION -->
+    <div class="page-content" id="page-4">
+        <div class="chapter-header">
+            <span class="chapter-tag">Chapter 03</span>
+            <h2 class="handwritten">Jungle Walk & Besties Moments</h2>
+            <p>Capturing laughter and hidden tropical spots</p>
+        </div>
+
+        <div class="grid-2">
+            <div class="polaroid tilt-left">
+                <img src="image_22.png" alt="Jungle Walk">
+                <div class="caption handwritten">Jungle Waterfall Walk🌴 </div>
+            </div>
+            <div class="polaroid tilt-right">
+                <img src="image_24.png" alt="Besties Moments">
+                <div class="caption handwritten">Elephant Poop📸</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- PAGE 5: CHAPTER 04 - SPORTS & ENERGETIC DAY -->
+    <div class="page-content" id="page-5">
+        <div class="chapter-header">
+            <span class="chapter-tag">Chapter 04</span>
+            <h2 class="handwritten">Muay Thai & Shooting Range</h2>
+            <p>An energetic day full of action and fun</p>
+        </div>
+
+        <div class="grid-3">
+            <div class="polaroid tilt-left">
+                <img src="image_17.png" alt="Shooting Range">
+                <div class="caption handwritten">Ready, Aim, Fire! 🔫</div>
+            </div>
+            <div class="polaroid">
+                <img src="image_18.png" alt="Bullseye Score">
+                <div class="caption handwritten">Bullseye Score! 🎯</div>
+            </div>
+            <div class="polaroid tilt-right">
+                <img src="image_19.png" alt="Muay Thai">
+                <div class="caption handwritten">Muay Thai Power 🥊</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- PAGE 6: CHAPTER 05 - ART, CREATIVITY & FAREWELL -->
+    <div class="page-content" id="page-6">
+        <div class="chapter-header">
+            <span class="chapter-tag">Chapter 05</span>
+            <h2 class="handwritten">Handmade Crafts & Sketches</h2>
+            <p>Eco-parks and painting memories onto paper</p>
+        </div>
+
+        <div class="grid-2">
+            <div class="polaroid tilt-right">
+                <img src="image_20.png" alt="Elephant Poopoopaper Park">
+                <div class="caption handwritten">Elephant Poopoopaper Park 🐘</div>
+            </div>
+            <div class="polaroid tilt-left">
+                <img src="image_16.png" alt="Art Journal Painting">
+                <div class="caption handwritten">Sketching Chiang Mai 🎨</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 底部翻页控制栏 -->
+    <div class="journal-nav">
+        <button class="nav-btn" id="prevBtn" onclick="changePage(-1)" disabled>
+            ← Previous Page
+        </button>
+        <div class="page-indicator handwritten" id="pageIndicator">Page 1 / 7</div>
+        <button class="nav-btn" id="nextBtn" onclick="changePage(1)">
+            Next Page →
+        </button>
+    </div>
+
+</div>
+
+<script>
+    let currentPage = 0;
+    const totalPages = 7;
+
+    function changePage(direction) {
+        const pages = document.querySelectorAll('.page-content');
+        pages[currentPage].classList.remove('active');
+
+        currentPage += direction;
+
+        if (currentPage < 0) currentPage = 0;
+        if (currentPage >= totalPages) currentPage = totalPages - 1;
+
+        pages[currentPage].classList.add('active');
+
+        // 更新按钮与页码状态
+        document.getElementById('prevBtn').disabled = (currentPage === 0);
+        document.getElementById('nextBtn').disabled = (currentPage === totalPages - 1);
+        document.getElementById('pageIndicator').innerText = `Page ${currentPage + 1} / ${totalPages}`;
+    }
+
+    // 支持键盘左右方向键翻页
+    document.addEventListener('keydown', function(event) {
+        if (event.key === 'ArrowLeft' && currentPage > 0) {
+            changePage(-1);
+        } else if (event.key === 'ArrowRight' && currentPage < totalPages - 1) {
+            changePage(1);
+        }
+    });
+ // 🎵 音乐播放控制逻辑
+    const bgm = document.getElementById('bgm');
+    const musicBtn = document.getElementById('musicBtn');
+    const musicStatus = document.getElementById('musicStatus');
+    let isPlaying = false;
+
+    function toggleMusic() {
+        if (isPlaying) {
+            bgm.pause();
+            musicBtn.classList.remove('music-playing');
+            musicStatus.innerText = 'Play Music ♫';
+        } else {
+            bgm.play().then(() => {
+                musicBtn.classList.add('music-playing');
+                musicStatus.innerText = 'Playing... ♪';
+            }).catch(e => {
+                console.log("Audio playback error: ", e);
+            });
+        }
+        isPlaying = !isPlaying;
+    }
+</script>
+
+</body>
+</html>
+
